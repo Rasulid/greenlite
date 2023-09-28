@@ -61,22 +61,22 @@ func (app *application) reteLimit(next http.Handler) http.Handler {
 		if err != nil {
 		app.serverStatusError(w, r, err)
 		return
-		}
+				}
 		mu.Lock()
 		if _, found := clients[ip]; !found {
 		clients[ip] = &client{
 	
 		limiter: rate.NewLimiter(rate.Limit(app.Config.limiter.rps), app.Config.limiter.burst),
-		}
-		}
+					}
+				}
 		clients[ip].lastseen = time.Now()
 		if !clients[ip].limiter.Allow() {
 		mu.Unlock()
 		app.rateLimitExceededResponse(w, r)
 		return
-		}
+				}
 		mu.Unlock()
-		}
+			}
 		next.ServeHTTP(w, r)
-		})
-		}
+	})
+}

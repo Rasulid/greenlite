@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"flag"
-	"fmt"
-	"net/http"
 	"os"
 	"time"
 
@@ -71,26 +69,15 @@ func main() {
 		models: data.NewMovies(db),
 	}
 
-	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cnf.port),
-		Handler:      app.routes(),
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
-	}
-
-
-	logger.PrintInfo("starting server", map[string]string{
-		"addr": srv.Addr,
-		"env": cnf.environment,
-		})
-
-	err = srv.ListenAndServe()
+	err = app.server()
 	if err != nil {
 		logger.PrintFatal(err, nil)
 	}
 
 }
+
+
+
 
 func openDB(cnf config) (*sql.DB, error) {
 	db, err := sql.Open("postgres", cnf.db.dns)
@@ -114,8 +101,7 @@ func openDB(cnf config) (*sql.DB, error) {
 	}
 
 	db.SetConnMaxIdleTime(duration)
-	// ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	// defer cancel()
+
 	err = db.PingContext(ctx)
 	if err != nil {
 		return nil, err
