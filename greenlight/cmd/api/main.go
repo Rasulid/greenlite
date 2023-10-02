@@ -10,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 	"greenlight.rasulabduvaitov.net/internal/data"
 	"greenlight.rasulabduvaitov.net/internal/jsonlog"
+	"greenlight.rasulabduvaitov.net/internal/mailer"
 )
 
 const version = "1.0"
@@ -28,12 +29,20 @@ type config struct {
 		burst int
 		enabled bool
 	}
+	smtp struct {
+		host string
+		port int
+		username string
+		password string
+		sender string
+	}
 }
 
 type application struct {
 	Config *config
 	logger *jsonlog.Logger
 	models data.Models
+	mailer mailer.Mailer
 }
 
 func main() {
@@ -51,6 +60,12 @@ func main() {
 	flag.Float64Var(&cnf.limiter.rps, "limiter-rps", 2, "Rate limiter maximum requests per second")
 	flag.IntVar(&cnf.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst")
 	flag.BoolVar(&cnf.limiter.enabled, "limiter-enabled", true, "Enable rate limiter")
+
+	flag.StringVar(&cnf.smtp.host, "smtp-host", "smtp.mailtrap.io", "SMTP host")
+	flag.IntVar(&cnf.smtp.port, "smtp-port", 25, "SMTP port")
+	flag.StringVar(&cnf.smtp.username, "smtp-username", "12e20bbb3816a9", "SMTP username")
+	flag.StringVar(&cnf.smtp.password, "smtp-password", "d5685d90015793", "SMTP password")
+	flag.StringVar(&cnf.smtp.sender, "smtp-sender", "Greenlight <no-reply@greenlight.alexedwards.net>", "SMTP sender")
 	flag.Parse()
 
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
@@ -67,6 +82,7 @@ func main() {
 		Config: &cnf,
 		logger: logger,
 		models: data.NewMovies(db),
+		mailer: mailer.New(cnf.smtp.host, cnf.smtp.port, cnf.smtp.username, cnf.smtp.password, cnf.smtp.sender),
 	}
 
 	err = app.server()

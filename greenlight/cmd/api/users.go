@@ -2,7 +2,9 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+
 	"greenlight.rasulabduvaitov.net/internal/data"
 	"greenlight.rasulabduvaitov.net/internal/validator"
 )
@@ -53,7 +55,14 @@ func (app *application) registrUserHendler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	err = app.writeJSON(w, http.StatusOK, envelope{"users": user}, nil)
+	err = app.mailer.Send(user.Email, "user_welcome.tmpl", user)
+	if err != nil {
+		fmt.Println(err, "______________________________")
+		app.serverStatusError(w,r, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusCreated, envelope{"users": user}, nil)
 	if err != nil {
 		app.serverStatusError(w,r,err)
 	}

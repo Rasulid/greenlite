@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-
 	"github.com/julienschmidt/httprouter"
 	"greenlight.rasulabduvaitov.net/internal/validator"
 )
