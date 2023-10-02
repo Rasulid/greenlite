@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"time"
@@ -23,7 +24,7 @@ type UserModel struct {
 
 
 type User struct {
-	ID string `json:"id"`
+	ID int64 `json:"id"`
 	CreatedAt time.Time `json:"created"`
 	Name string `json:"name"`
 	Email string `json:"email"`
@@ -195,5 +196,55 @@ func (m *UserModel) Update(user *User) error {
 	}
 
 	return nil
+
+}
+
+
+func (m *UserModel) GetForToken(tokenScope, tokenPlainText string) (*User, error) {
+
+	tokenHash  := sha256.Sum256([]byte(tokenPlainText))
+
+
+	query := `
+	SELECT users.id, users.created_at, users.name, users.email, users.password_hash, users.activated, users.version
+	FROM users
+	INNER JOIN tokens
+	ON users.id = tokens.user_id
+	WHERE tokens.hash = $1
+	AND tokens.scope = $2
+	AND tokens.expiry > $3`
+
+	args := []interface{}{tokenHash[:], tokenPlainText, time.Now()}
+
+	var user User
+
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(
+		&user.ID,
+		&user.CreatedAt,
+		&user.Name,
+		&user.Email,
+		&user.Password.hash,
+		&user.Activate,
+		&user.Version,
+	)
+	if err != nil {
+
+		switch {
+
+		case errors.Is(err, sql.ErrNoRows):
+
+			return nil, ErrorRecordNotFound
+			
+		default:
+
+			return nil, err
+		}
+	}
+
+	return &user, nil
 
 }

@@ -22,6 +22,7 @@ func (app *application) routes() http.Handler {
 
 
 	router.HandlerFunc(http.MethodPost, "/v1/users", app.registrUserHendler)
+	router.HandlerFunc(http.MethodPut, "/v1/users/activated", app.activateUserHendler)
 
 	return app.recoverPanic(app.reteLimit(router))
 }
