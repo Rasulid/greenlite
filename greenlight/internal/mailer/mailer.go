@@ -3,7 +3,6 @@ package mailer
 import (
 	"bytes"
 	"embed"
-	"fmt"
 	"html/template"
 	"time"
 	"github.com/go-mail/mail/v2"
@@ -37,7 +36,6 @@ func (m Mailer) Send(recipient, templateFile string, data interface{}) error {
 
 	tmpl, err := template.New("email").ParseFS(templateFS, "templates/"+templateFile)
 	if err != nil {
-		fmt.Println("file not found: ", err)
 	return err
 }
 
