@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/lib/pq"
@@ -29,7 +30,7 @@ type User struct {
 	Name string `json:"name"`
 	Email string `json:"email"`
 	Password password `json:"-"`
-	Activate bool `json:"activate"`
+	Activated bool `json:"activated"`
 	Version int `json:"version"`
 
 }
@@ -103,7 +104,7 @@ func (m UserModel) Insert(user *User) error {
 
 	`
 
-	args := []interface{}{user.Name, user.Email, string(user.Password.hash), user.Activate}
+	args := []interface{}{user.Name, user.Email, string(user.Password.hash), user.Activated}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -147,7 +148,7 @@ func (m *UserModel) GetByEmail(email string) (*User, error) {
 		&user.Name,
 		&user.Email,
 		&user.Password.hash,
-		&user.Activate,
+		&user.Activated,
 		&user.Version,
 	)
 	if err != nil {
@@ -176,7 +177,7 @@ func (m *UserModel) Update(user *User) error {
 		user.Name,
 		user.Email,
 		user.Password.hash,
-		user.Activate,
+		user.Activated,
 		user.ID,
 		user.Version,
 	}
@@ -228,9 +229,12 @@ func (m *UserModel) GetForToken(tokenScope, tokenPlainText string) (*User, error
 		&user.Name,
 		&user.Email,
 		&user.Password.hash,
-		&user.Activate,
+		&user.Activated,
 		&user.Version,
 	)
+
+	fmt.Println(user.ID)
+
 	if err != nil {
 
 		switch {

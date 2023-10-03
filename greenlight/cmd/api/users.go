@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -27,7 +28,7 @@ func (app *application) registrUserHendler(w http.ResponseWriter, r *http.Reques
 	user := &data.User{
 		Name: input.Name,
 		Email: input.Email,
-		Activate: false,
+		Activated: false,
 	}
 
 	err = user.Password.Set(input.Password)
@@ -107,6 +108,8 @@ func (app *application) activateUserHendler(w http.ResponseWriter, r *http.Reque
 
 	user, err := app.models.Users.GetForToken(data.ScopeActiation, input.TokenPlainText)
 	if err != nil {
+		fmt.Println("user:", user)
+		fmt.Println("error:", err)
 		switch{
 		case errors.Is(err, data.ErrorRecordNotFound):
 			v.AddErrors("token", "invalid or expired token")
@@ -118,7 +121,7 @@ func (app *application) activateUserHendler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	user.Activate = true
+	user.Activated = true
 
 	err = app.models.Users.Update(user)
 	if err != nil {
