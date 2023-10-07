@@ -75,3 +75,8 @@ func (app *application) server() error {
 
 	return nil
 }
+
+
+func pri(){
+	print("ss")
+}
